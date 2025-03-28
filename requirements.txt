@@ -6,4 +6,6 @@ passlib
 bcrypt
 python-dotenv
 openai
+pydantic
+jwt
 jinja2
