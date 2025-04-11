@@ -22,4 +22,5 @@ class Itinerary(Base):
     end_date = Column(Date)
     budget = Column(Numeric)
     generated_itinerary = Column(Text)
+    weather_forecast = Column(String, nullable=True)
     user = relationship("User", back_populates="itineraries")
