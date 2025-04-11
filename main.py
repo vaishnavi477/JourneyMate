@@ -141,7 +141,7 @@ def get_lat_long(city_name):
 
 # ======================== Routes ======================== #
 
-@app.get("/register", response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     """Render the homepage."""
     return templates.TemplateResponse("index.html", {"request": request})
