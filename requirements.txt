@@ -13,3 +13,4 @@ pydantic
 pydantic[email]
 pyjwt
 pytz
+requests
