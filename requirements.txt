@@ -12,3 +12,4 @@ python-multipart
 pydantic
 pydantic[email]
 pyjwt
+pytz
