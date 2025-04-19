@@ -11,7 +11,7 @@
         /* Global Styles */
         body {
             font-family: 'Roboto', sans-serif;
-            background: url('https://via.placeholder.com/1920x1080/4d9fef/ffffff') no-repeat center center fixed;
+            background: url("{{ url_for('static', path='images/homepage.png') }}") no-repeat center center fixed;
             background-size: cover;
             color: white;
             margin: 0;
@@ -123,11 +123,12 @@
     <!-- Main Container -->
     <div class="container">
         <h1 class="text-center mb-4" style="font-size: 3rem; font-weight: bold;">JourneyMate</h1>
-        </br></br>
+        </br>
         <!-- Auth Container -->
         <div id="authContainer" class="auth-container">
-            <h4 class="text-center">Register / Login</h4>
-
+            <!-- <h4 class="text-center">Your next adventure awaits when you sign up!</h4> -->
+             <h4 class="text-center">Let's help you plan your perfect getaway!</h4>
+        </br>
             <!-- Signup Form -->
             <form id="signupForm">
                 <div class="mb-3">
@@ -140,7 +141,8 @@
                 </div>
                 <div class="mb-3">
                     <label for="signupPassword" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="signupPassword" placeholder="Enter your password" required>
+                    <input type="password" class="form-control" id="signupPassword" placeholder="Enter your password" required 
+                    pattern="(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}" title="Password must be at least 8 characters long and include one uppercase letter, one number, and one special character.">
                 </div>
                 <button type="submit" class="btn-custom">Sign Up</button>
             </form>
