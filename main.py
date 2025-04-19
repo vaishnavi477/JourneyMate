@@ -4,6 +4,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse      
 from sqlalchemy.orm import Session                                                              # type: ignore
 from passlib.context import CryptContext                                                        # type: ignore
 from dotenv import load_dotenv
+from fastapi.staticfiles import StaticFiles                                                     # type: ignore
 from openai import OpenAI
 from datetime import datetime, timedelta
 import os, time, pytz
@@ -35,6 +36,9 @@ if not timezone_api_key:
 
 # Initialize FastAPI application
 app = FastAPI()
+
+# Mount the static files directory
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Set up Jinja2 templates for HTML rendering
 templates = Jinja2Templates(directory="templates")
