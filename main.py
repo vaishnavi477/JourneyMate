@@ -239,13 +239,14 @@ async def generate_itinerary(
     end_date_obj = datetime.strptime(end_date, "%Y-%m-%d")
 
     # Fetch weather data for each day in the date range
-    weather_forecast = get_weather_forecast_for_range(destination, start_date_obj, end_date_obj)
-    
+    # weather_forecast = get_weather_forecast_for_range(destination, start_date_obj, end_date_obj)
+    # Also, consider the following weather forecast while planning activities: 
+    # {weather_forecast}.
     prompt = f"""
     Create a well-structured travel itinerary for a trip to {destination} from {start_date} to {end_date}. 
     The users interests are: {interests}. The budget for the trip is {budget}. 
-    Also, consider the following weather forecast while planning activities: 
-    {weather_forecast}.
+    There should not be any asterisks and have the itinerary based on the token count.
+    Keep it well structured and have everything like bullet points. 
     
     The itinerary should be broken down by day, with the following details for each day:
     - Day 1: (Activity suggestion based on weather and interests)
@@ -265,7 +266,7 @@ async def generate_itinerary(
             {"role": "system", "content": "You are a helpful travel assistant."},
             {"role": "user", "content": prompt}
         ],
-        max_tokens=500,
+        max_tokens=600,
         temperature=0.5
     )
 
@@ -278,7 +279,7 @@ async def generate_itinerary(
         end_date=end_date, 
         budget=budget, 
         generated_itinerary=generated_itinerary, 
-        weather_forecast="\n".join(weather_forecast),
+        # weather_forecast="\n".join(weather_forecast),
         user_id=current_user.id  # 🔐 Link itinerary to user
     )
     
@@ -286,7 +287,7 @@ async def generate_itinerary(
     db.commit()
     db.refresh(itinerary)
     
-    return {"itinerary": generated_itinerary, "weather_forecast": weather_forecast, "user": current_user.email}
+    return {"itinerary": generated_itinerary,  "user": current_user.email} # "weather_forecast": weather_forecast}
 
 # ========== Get Local Time ========== #
 @app.get("/local-time/{city_name}")
