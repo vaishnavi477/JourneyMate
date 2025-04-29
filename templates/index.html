@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         /* Global Styles */
         body {
@@ -27,7 +28,7 @@
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-            margin-bottom: 50px; /* Added margin to prevent overlap with footer */
+            margin-bottom: 50px;
             flex-grow: 1;
         }
 
@@ -47,6 +48,7 @@
             padding: 15px;
             width: 100%;
             transition: background-color 0.3s ease;
+            margin-top: 10px;
         }
 
         .btn-custom:hover {
@@ -70,11 +72,13 @@
             background: rgba(255, 255, 255, 0.9);
             padding: 20px;
             border-radius: 10px;
-            color: black;             
+            color: black;
+            margin-top: 20px;
         }
 
         h3 {
             margin-bottom: 20px;
+            text-align: center;
         }
 
         .footer {
@@ -82,9 +86,8 @@
             text-align: center;
             color: white;
             padding: 15px;
-            position: relative;
+            margin-top: auto;
             width: 100%;
-            margin-top: auto; /* Ensures footer stays at the bottom */
         }
 
         .auth-container {
@@ -94,41 +97,83 @@
 
         #logoutBtn {
             padding: 10px 20px;
-            background-color: #8ab6d6;  /* Mild color (light blue) for the logout button */
-            color: white;  /* White text */
+            background-color: #8ab6d6;
+            color: white;
             font-size: 16px;
             font-weight: bold;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.2s ease;
-            
-            /* Position the button in the top-right corner */
             position: fixed;
-            top: 20px;   /* Adjust the vertical position */
-            right: 20px;  /* Adjust the horizontal position */
+            top: 20px;
+            right: 20px;
         }
-        
-        /* Hover effect for the logout button */
+
         #logoutBtn:hover {
-            background-color: #5a92b1;  /* Slightly darker shade on hover */
-            transform: scale(1.1);  /* Slightly enlarge the button on hover */
+            background-color: #5a92b1;
+            transform: scale(1.1);
         }
-        
-        
+
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            align-items: flex-start;
+        }
+    
+        #itineraryForm, #itineraryResults {
+            flex: 1 1 45%;
+            min-width: 300px;
+        }
+    
+        /* Fade-in animation */
+        .fade-in {
+            animation: fadeInAnimation 0.8s ease forwards;
+        }
+    
+        @keyframes fadeInAnimation {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    
+        /* Make buttons inline */
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .button-group button {
+            flex: 1 1 150px;
+        }
+    
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+        }    
     </style>
 </head>
-<body>
 
-    <!-- Main Container -->
+<body data-background-url="{{ url_for('static', path='images/homepage.png') }}">
+
     <div class="container">
         <h1 class="text-center mb-4" style="font-size: 3rem; font-weight: bold;">JourneyMate</h1>
-        </br>
+
         <!-- Auth Container -->
         <div id="authContainer" class="auth-container">
-            <!-- <h4 class="text-center">Your next adventure awaits when you sign up!</h4> -->
-             <h4 class="text-center">Let's help you plan your perfect getaway!</h4>
-        </br>
+            <h4 class="text-center">Let's help you plan your perfect getaway!</h4>
+            <br>
             <!-- Signup Form -->
             <form id="signupForm">
                 <div class="mb-3">
@@ -142,7 +187,7 @@
                 <div class="mb-3">
                     <label for="signupPassword" class="form-label">Password</label>
                     <input type="password" class="form-control" id="signupPassword" placeholder="Enter your password" required 
-                    pattern="(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}" title="Password must be at least 8 characters long and include one uppercase letter, one number, and one special character.">
+                    pattern="(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}" title="Password must be at least 8 characters long and include one uppercase letter, one number, and one special character.">
                 </div>
                 <button type="submit" class="btn-custom">Sign Up</button>
             </form>
@@ -163,48 +208,65 @@
             </form>
         </div>
 
-        <!-- User Input Form -->
-        <form id="itineraryForm" style="display:none;">
-            <div class="mb-3">
-                <label for="destination" class="form-label">Destination</label>
-                <input type="text" class="form-control" id="destination" placeholder="Where do you want to go?" required>
-            </div>
-            <div class="mb-3">
-                <label for="startDate" class="form-label">Start Date</label>
-                <input type="date" class="form-control" id="startDate" required>
-            </div>
-            <div class="mb-3">
-                <label for="endDate" class="form-label">End Date</label>
-                <input type="date" class="form-control" id="endDate" required>
-            </div>
-            <div class="mb-3">
-                <label for="interests" class="form-label">Interests</label>
-                <input type="text" class="form-control" id="interests" placeholder="e.g., adventure, culture" required>
-            </div>
-            <div class="mb-3">
-                <label for="budget" class="form-label">Budget (USD)</label>
-                <input type="number" class="form-control" id="budget" placeholder="Enter budget" required>
-            </div>
+        <div class="main-content">
+            <!-- Itinerary Form -->
+            <form id="itineraryForm" style="display:none;">
+                <div class="mb-3">
+                    <label for="destination" class="form-label">Destination</label>
+                    <input type="text" class="form-control" id="destination" placeholder="Where do you want to go?" required>
+                    <p id="localTimeResult" style="margin-top: 10px; font-size: 1rem; color: #ccc;"></p> <!-- 👈 Added Local Time Result -->
+                </div>
+                <div class="mb-3">
+                    <label for="startDate" class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="startDate" required>
+                </div>
+                <div class="mb-3">
+                    <label for="endDate" class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="endDate" required>
+                </div>
+                <div class="mb-3">
+                    <label for="interests" class="form-label">Interests</label>
+                    <input type="text" class="form-control" id="interests" placeholder="e.g., adventure, culture" required>
+                </div>
+                <div class="mb-3">
+                    <label for="budget" class="form-label">Budget (USD)</label>
+                    <input type="number" class="form-control" id="budget" placeholder="Enter budget" required>
+                </div>
 
-            <button type="submit" class="btn-custom">Generate Itinerary</button>
+                <button type="submit" class="btn-custom">Generate Itinerary</button>
 
-            <div class="loading" id="loadingMessage">
-                <div class="spinner-border text-light" role="status"></div>
-                <p>Generating your itinerary...</p>
+                <div class="loading" id="loadingMessage">
+                    <div class="spinner-border text-light" role="status"></div>
+                    <p>Generating your itinerary...</p>
+                </div>
+            </form>
+
+            <!-- Logout Button -->
+            <button id="logoutBtn" style="display: none;">Logout</button>
+
+            <!-- Itinerary Results -->
+            <div id="itineraryResults">
+                <h3>Your Custom Itinerary</h3>
+                <p id="itineraryText"></p>
+
+                <!-- Button Group for Copy and Download -->
+                <div class="button-group">
+                    <button class="btn-custom" onclick="copyItinerary()">Copy Itinerary</button>
+                    <button class="btn-custom" onclick="downloadItinerary()">Download</button>
+                </div>
+                
+                <!-- Plan Another Trip Button -->
+                <div class="text-center" style="margin-top: 20px;">
+                    <button class="btn-custom" onclick="resetForm()">Plan Another Trip</button>
+                </div>
+
+                <!-- Search Flights Button -->
+                <div class="text-center" style="margin-top: 20px;">
+                    <button class="btn-custom" onclick="searchFlights()">Search Flights</button>
+                </div>
             </div>
-        </form>
-
-        <!-- User Logout Button-->
-        <button id="logoutBtn" style="display: none;">Logout</button>
-
-        <!-- Itinerary Results -->
-        <div id="itineraryResults">
-            <h3>Your Custom Itinerary</h3>
-            <p id="itineraryText"></p>
-            <button class="btn-custom" onclick="resetForm()">Plan Another Trip</button>
         </div>
     </div>
-
     <!-- Footer -->
     <div class="footer">
         <p>&copy; JourneyMate. All Rights Reserved.</p>
@@ -212,24 +274,21 @@
 
     <script>
         $(document).ready(function() {
-            // Show the signup form initially
             $("#authContainer").show();
 
-            // Handle signup form submission
             $("#signupForm").submit(function(event) {
                 event.preventDefault();
-            
                 const formData = new FormData();
                 formData.append("username", $("#signupName").val().trim());
                 formData.append("email", $("#signupEmail").val().trim());
                 formData.append("password", $("#signupPassword").val().trim());
-            
+
                 $.ajax({
                     url: "/register",
                     type: "POST",
                     data: formData,
-                    processData: false, // Important: Prevents jQuery from processing data
-                    contentType: false, // Important: Prevents jQuery from setting incorrect Content-Type
+                    processData: false,
+                    contentType: false,
                     success: function(response) {
                         alert("Registration successful! Please login.");
                         $("#signupForm").hide();
@@ -241,10 +300,8 @@
                 });
             });
 
-            // Handle login form submission
             $("#loginForm").submit(function(event) {
                 event.preventDefault();
-
                 const email = $("#loginEmail").val().trim();
                 const password = $("#loginPassword").val().trim();
 
@@ -253,32 +310,22 @@
                     return;
                 }
 
-                // Call API for user login (replace with your API call)
-                $.post(
-                    "/login", 
-                    { username: email, password: password }, // 'username' is used in OAuth2PasswordRequestForm
-                    function(response) {
-                        
-                        // On successful login, store the token in localStorage
-                        localStorage.setItem("access_token", response.access_token);
-                        
-                        alert("Login successful!");
-                        $("#authContainer").hide();
-                        $("#itineraryForm").show();
-                        $("#logoutBtn").show(); // Show logout button after successful login
-                    }
-                ).fail(function() {
+                $.post("/login", { username: email, password: password }, function(response) {
+                    localStorage.setItem("access_token", response.access_token);
+                    alert("Login successful!");
+                    $("#authContainer").hide();
+                    $("#itineraryForm").show();
+                    $("#logoutBtn").show();
+                }).fail(function() {
                     alert("Invalid email or password.");
                 });
             });
 
-            // Toggle between login and signup forms
             $("#showLogin").click(function() {
                 $("#signupForm").hide();
                 $("#loginForm").show();
             });
 
-            // Handle itinerary form submission
             $("#itineraryForm").submit(function(event) {
                 event.preventDefault();
 
@@ -287,8 +334,6 @@
                 const endDate = $("#endDate").val();
                 const interests = $("#interests").val().trim();
                 const budget = $("#budget").val();
-
-                // Retrieve token from localStorage (assuming it's stored after login)
                 const token = localStorage.getItem("access_token");
 
                 if (!token) {
@@ -296,24 +341,14 @@
                     return;
                 }
 
-                // Validate fields
-                if (!destination || !startDate || !endDate || !interests || !budget) {
-                    alert("Please fill in all fields.");
-                    return;
-                }
-
-                // Show loading message
                 $("#loadingMessage").fadeIn();
                 $("#itineraryResults").hide();
 
-                // Call the API to generate the itinerary
                 $.ajax({
                     type: "POST",
                     url: "/generate-itinerary",
-                    contentType: "application/x-www-form-urlencoded",  // Ensures form data is sent correctly
-                    headers: {
-                        "Authorization": `Bearer ${token}`  // Include token in request headers
-                    },
+                    contentType: "application/x-www-form-urlencoded",
+                    headers: { "Authorization": `Bearer ${token}` },
                     data: {
                         destination: destination,
                         start_date: startDate,
@@ -322,16 +357,20 @@
                         budget: budget
                     },
                     success: function(response) {
-                        const itineraryText = response.itinerary;
-                        $("#itineraryText").html(itineraryText);
+                        $("#itineraryText").html(response.itinerary);
                         $("#itineraryResults").fadeIn();
+                        const resultsSection = document.getElementById('itineraryResults');
+                        resultsSection.style.display = 'block';
+                        resultsSection.classList.remove('fade-in'); 
+                        void resultsSection.offsetWidth; 
+                        resultsSection.classList.add('fade-in');
                         $("#loadingMessage").fadeOut();
                     },
                     error: function(xhr) {
                         if (xhr.status === 401) {
                             alert("Unauthorized: Please log in again.");
-                            localStorage.removeItem("access_token");  // Clear expired token
-                            window.location.href = "/login";  // Redirect to login page
+                            localStorage.removeItem("access_token");
+                            window.location.reload();
                         } else {
                             alert("An error occurred while generating your itinerary.");
                         }
@@ -340,46 +379,152 @@
                 });
             });
 
-            // Handle logout button click
             $("#logoutBtn").click(function() {
-                // Retrieve the JWT token from local storage or cookies (depending on where it's stored)
-                const token = localStorage.getItem("access_token"); // Or use sessionStorage or cookies, depending on your app
-
-                // If there's no token, alert and prevent logout
+                const token = localStorage.getItem("access_token");
                 if (!token) {
                     alert("No active session found.");
                     return;
                 }
 
-                // Send the logout request with the JWT token in the Authorization header
                 $.ajax({
-                    url: "/logout",  // Your logout endpoint
+                    url: "/logout",
                     type: "POST",
-                    headers: {
-                        "Authorization": `Bearer ${token}`,  // Send the token in the Authorization header
-                    },
+                    headers: { "Authorization": `Bearer ${token}` },
                     success: function(response) {
-                        // Handle successful logout
                         alert(response.message);
-                        window.location.href = '/';  // Redirect to login page or home page
-                        $("#itineraryForm").hide();  // Hide itinerary content
-                        $("#authContainer").show();  // Show login form again
-                        $("#logoutBtn").hide();  // Hide logout button
+                        window.location.reload();
                     },
                     error: function() {
                         alert("Error logging out.");
                     }
                 });
-            }); 
+            });
+
+            // Local time fetching when typing destination
+            let typingTimer;
+            const doneTypingInterval = 800; // 800 ms wait after typing stops
+            const input = document.getElementById('destination');
+            const result = document.getElementById('localTimeResult');
+
+            input.addEventListener('input', () => {
+                clearTimeout(typingTimer);
+
+                typingTimer = setTimeout(async () => {
+                    const city = input.value.trim();
+                    if (city.length === 0) {
+                        result.innerText = '';
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`/local-time/${city}`);
+                        if (!response.ok) {
+                            throw new Error('City not found or API error');
+                        }
+
+                        const localTime = await response.text();
+                        result.innerText = `Local Time in ${city}: ${localTime}`;
+                    } catch (error) {
+                        result.innerText = `Error: ${error.message}`;
+                    }
+                }, doneTypingInterval);
+            });
         });
 
-        // Reset form and background
         function resetForm() {
             $("#itineraryForm")[0].reset();
             $("#itineraryResults").hide();
-            $("body").css("background", "url('https://via.placeholder.com/1920x1080/4d9fef') no-repeat center center fixed");
+            const backgroundUrl = $("body").data("background-url");
+            $("body").css("background: cover", `url(${backgroundUrl}) no-repeat center center fixed`);
+            document.getElementById("localTimeResult").innerText = '';
         }
-    </script>
 
+        function downloadItinerary() {
+            const itineraryText = document.getElementById("itineraryText").innerText;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+        
+            // Set some styles for better readability
+            doc.setFont('helvetica');
+            doc.setFontSize(12);
+        
+            // Split the itinerary text into paragraphs using line breaks
+            const lines = doc.splitTextToSize(itineraryText, 180); // 180 is the width of the page
+            let y = 10;
+        
+            // Add the lines to the PDF, keeping track of the y-coordinate for pagination
+            lines.forEach((line, index) => {
+                doc.text(line, 10, y);
+                y += 10; // Move down the page for the next line
+        
+                // Check if the text exceeds the page height, and add a new page if necessary
+                if (y > 280) {
+                    doc.addPage();
+                    y = 10;
+                }
+            });
+        
+            // Save the generated PDF
+            doc.save("my_itinerary.pdf");
+        }
+
+        function copyItinerary() {
+            const itineraryText = document.getElementById("itineraryText").innerText;
+            
+            // Create a temporary input element to hold the text to copy
+            const tempInput = document.createElement("textarea");
+            tempInput.value = itineraryText; // Set the value to the itinerary text
+            document.body.appendChild(tempInput); // Add the input to the body
+            tempInput.select(); // Select the text
+            tempInput.setSelectionRange(0, 99999); // For mobile devices
+            
+            // Execute the copy command
+            document.execCommand('copy');
+            
+            // Remove the temporary input element
+            document.body.removeChild(tempInput);
+            
+            // Provide feedback to the user
+            alert("Itinerary copied to clipboard!");
+        }
+
+        async function searchFlights() {
+            const destination = $("#destination").val().trim();
+            const startDate = $("#startDate").val();
+            const endDate = $("#endDate").val();
+        
+            if (!destination || !startDate || !endDate) {
+                alert("Destination and dates are required to search for flights.");
+                return;
+            }
+        
+            const origin = prompt("Enter your departure airport code (e.g., JFK):");
+            if (!origin) {
+                alert("Origin is required to search for flights.");
+                return;
+            }
+        
+            try {
+                const res = await fetch(`/search-flights?origin=${origin}&destination=${destination}&date_from=${startDate}&date_to=${endDate}`);
+                const data = await res.json();
+        
+                if (!data.flights || data.flights.length === 0) {
+                    alert("No flights found.");
+                    return;
+                }
+        
+                let flightsHtml = "Available Flights:\n\n";
+                data.flights.forEach(flight => {
+                    flightsHtml += `📍 Destination: ${flight.destination}\n🛫 Departure: ${flight.departureDate}\n💵 Price: $${flight.price}\n\n`;
+                });
+        
+                alert(flightsHtml);
+            } catch (error) {
+                console.error("Error searching flights:", error);
+                alert("Failed to fetch flights. Please try again.");
+            }
+        }           
+        
+    </script>
 </body>
 </html>
