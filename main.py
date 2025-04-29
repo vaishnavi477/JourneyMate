@@ -245,8 +245,8 @@ async def generate_itinerary(
     prompt = f"""
     Create a well-structured travel itinerary for a trip to {destination} from {start_date} to {end_date}. 
     The users interests are: {interests}. The budget for the trip is {budget}. 
-    There should not be any asterisks and have the itinerary based on the token count.
-    Keep it well structured and have everything like bullet points. 
+    There should be no asterisks and have the itinerary based on the token count.
+    Keep it well structured and do not use asterisks, bullet points, Markdown, or any special characters. Just plain readable text with line breaks.
     
     The itinerary should be broken down by day, with the following details for each day:
     - Day 1: (Activity suggestion based on weather and interests)
@@ -263,26 +263,25 @@ async def generate_itinerary(
     response = client.chat.completions.create(
         model="gpt-4",
         messages=[
-            {"role": "system", "content": "You are a helpful travel assistant."},
+            {"role": "system", "content": "You are a helpful travel assistant. Respond in plain text. Use clear line-separated day labels like 'Day 1:', 'Day 2:' and avoid using asterisks, bullet points, or any Markdown formatting."},
             {"role": "user", "content": prompt}
         ],
-        max_tokens=600,
+        max_tokens=1000,
         temperature=0.5
     )
 
     generated_itinerary = response.choices[0].message.content
 
     itinerary = Itinerary(
+        user_id=current_user.id,  # 🔐 Link itinerary to user
         destination=destination, 
         interests=interests, 
         start_date=start_date, 
         end_date=end_date, 
         budget=budget, 
-        generated_itinerary=generated_itinerary, 
+        generated_itinerary=generated_itinerary
         # weather_forecast="\n".join(weather_forecast),
-        user_id=current_user.id  # 🔐 Link itinerary to user
     )
-    
     db.add(itinerary)
     db.commit()
     db.refresh(itinerary)
@@ -314,12 +313,62 @@ async def get_local_time(city_name):
         print(f"Error: {response['status']}")
         return None
 
-# ========== 🚪 User Logout (Token Blacklist) ========== #
-@app.post("/logout")
-def logout_user(token: str = Depends(oauth2_scheme)):
-    """Invalidate JWT token by adding it to the blacklist."""
-    blacklisted_tokens.add(token)
-    return {"message": "Successfully logged out"}
+# ========== Search Flights  ========== #
+@app.get("/search-flights")
+def search_flights(origin: str, destination: str, date_from: str, date_to: str):
+    AMADEUS_API_KEY = os.getenv("AMADEUS_API_KEY")
+    AMADEUS_API_SECRET = os.getenv("AMADEUS_API_SECRET")
+
+    if not AMADEUS_API_KEY or not AMADEUS_API_SECRET:
+        raise HTTPException(status_code=500, detail="Amadeus credentials missing.")
+
+    # Step 1: Get access token
+    auth_response = requests.post(
+        "https://test.api.amadeus.com/v1/security/oauth2/token",
+        data={
+            "grant_type": "client_credentials",
+            "client_id": AMADEUS_API_KEY,
+            "client_secret": AMADEUS_API_SECRET
+        },
+        headers={"Content-Type": "application/x-www-form-urlencoded"}
+    )
+
+    if auth_response.status_code != 200:
+        print(auth_response.text)
+        raise HTTPException(status_code=500, detail="Failed to authenticate with Amadeus.")
+
+    access_token = auth_response.json()["access_token"]
+
+    # Step 2: Search flights
+    url = "https://test.api.amadeus.com/v1/shopping/flight-destinations"
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+    params = {
+        "origin": origin.upper(),
+        "departureDate": date_from,
+        "oneWay": False,
+        "maxPrice": 1000,
+        "currency": "USD"
+    }
+
+    response = requests.get(url, headers=headers, params=params)
+
+    if response.status_code != 200:
+        print("Flight search error:", response.text)
+        raise HTTPException(status_code=500, detail="Error fetching flight data.")
+
+    flight_data = response.json()
+    results = []
+
+    for flight in flight_data.get("data", []):
+        results.append({
+            "price": flight.get("price", {}).get("total", "N/A"),
+            "destination": flight.get("destination"),
+            "departureDate": flight.get("departureDate"),
+        })
+
+    return {"flights": results}
 
 # ======================== User Management Routes ======================== #
 
@@ -387,3 +436,11 @@ async def delete_user(user_id: int, db: Session = Depends(get_db)):
     db.commit()
     
     return {"message": "User deleted successfully"}
+
+@app.get("/my-itineraries")
+def get_user_itineraries(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    trips = db.query(Itinerary).filter(Itinerary.user_id == current_user.id).all()
+    return trips
