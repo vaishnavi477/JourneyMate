@@ -14,13 +14,13 @@ class User(Base):
 
 class Itinerary(Base):
     __tablename__ = "itineraries"
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    destination = Column(String)
-    interests = Column(Text)
-    start_date = Column(Date)
-    end_date = Column(Date)
-    budget = Column(Numeric)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    destination = Column(String, nullable=False)
+    interests = Column(Text, nullable=False)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+    budget = Column(Numeric, nullable=False)
     generated_itinerary = Column(Text)
     # weather_forecast = Column(String, nullable=True)
     user = relationship("User", back_populates="itineraries")
