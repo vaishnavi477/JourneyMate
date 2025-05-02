@@ -143,6 +143,38 @@
                 transform: translateY(0);
             }
         }
+
+        .flight-list {
+            margin-top: 5px;
+        }
+        
+        .flight-card {
+            background-color: #f9f9f9;
+            border-left: 4px solid #007bff;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }   
+        
+        .flight-card p {
+            margin: 4px 0;
+        }
+
+        .book-flight-btn {
+            background-color: #007bff; /* Bootstrap Blue */
+            color: white;              /* White text for contrast */
+            border: none;
+            padding: 10px 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+        
+        .book-flight-btn:hover {
+            background-color: #0056b3; /* Darker blue on hover */
+        }
     
         /* Make buttons inline */
         .button-group {
@@ -174,6 +206,7 @@
         <div id="authContainer" class="auth-container">
             <h4 class="text-center">Let's help you plan your perfect getaway!</h4>
             <br>
+                       
             <!-- Signup Form -->
             <form id="signupForm">
                 <div class="mb-3">
@@ -234,19 +267,19 @@
                 </div>
 
                 <button type="submit" class="btn-custom">Generate Itinerary</button>
-
-                <div class="loading" id="loadingMessage">
-                    <div class="spinner-border text-light" role="status"></div>
-                    <p>Generating your itinerary...</p>
-                </div>
             </form>
 
             <!-- Logout Button -->
             <button id="logoutBtn" style="display: none;">Logout</button>
 
+            <div class="loading" id="loadingMessage">
+                <p>Generating your itinerary, Please wait...</p>
+                <div class="spinner-border text-light" role="status"></div>
+            </div>
+
             <!-- Itinerary Results -->
             <div id="itineraryResults">
-                <h3>Your Custom Itinerary</h3>
+                <h3><b>Your Custom Itinerary</b></h3>
                 <p id="itineraryText"></p>
 
                 <!-- Button Group for Copy and Download -->
@@ -262,11 +295,24 @@
 
                 <!-- Search Flights Button -->
                 <div class="text-center" style="margin-top: 20px;">
-                    <button class="btn-custom" onclick="searchFlights()">Search Flights</button>
-                </div>
-            </div>
+                    <button class="btn-custom" onclick="$('#flight-search-form').toggle()">Search Flights</button>
+                    <div id="flight-search-form" class="mt-3" style="display: none;">
+                        <div class="mb-3">
+                            <input type="text" class="form-control" id="origin" placeholder="Where are you flying from?" required>
+                        </div>
+                        <button class="btn btn-success" onclick="searchFlights()">Find Flights</button>
+                    </div>
+                    <div id="flightSpinner" style="display: none; text-align: center; margin-top: 20px;">
+                        <p>Searching for flights, Please wait...</p>
+                        <div class="spinner-border text-light" role="status"></div>
+                    </div>
+                    <div id="flightResults" style="white-space: pre-line; margin-top: 20px; display: none;"></div>
+                </div> 
+            </div> 
         </div>
+        <div id="messageBox" class="text-center mt-3" style="color: yellow; font-weight: bold;"></div>
     </div>
+
     <!-- Footer -->
     <div class="footer">
         <p>&copy; JourneyMate. All Rights Reserved.</p>
@@ -290,12 +336,12 @@
                     processData: false,
                     contentType: false,
                     success: function(response) {
-                        alert("Registration successful! Please login.");
+                        showMessage("Registration successful! Please login.", "success");
                         $("#signupForm").hide();
                         $("#loginForm").show();
                     },
                     error: function(xhr) {
-                        alert("Error: " + xhr.responseText);
+                        showMessage("Error: " + xhr.responseText, "error");
                     }
                 });
             });
@@ -306,18 +352,23 @@
                 const password = $("#loginPassword").val().trim();
 
                 if (!email || !password) {
-                    alert("Please fill in all fields.");
+                    showMessage("Please fill in all fields.", "error", false);
                     return;
                 }
 
+                if (!email.includes('@') || !email.endsWith('.com')) {
+                    showMessage("Invalid email format. Please enter a valid email.", "error", false);
+                    return;
+                }
+                                
                 $.post("/login", { username: email, password: password }, function(response) {
                     localStorage.setItem("access_token", response.access_token);
-                    alert("Login successful!");
+                    showMessage("Login successful!", "success");
                     $("#authContainer").hide();
                     $("#itineraryForm").show();
                     $("#logoutBtn").show();
                 }).fail(function() {
-                    alert("Invalid email or password.");
+                    showMessage("Invalid email or password.", "error", false);
                 });
             });
 
@@ -337,12 +388,14 @@
                 const token = localStorage.getItem("access_token");
 
                 if (!token) {
-                    alert("You must be logged in to generate an itinerary.");
+                    showMessage("You must be logged in to generate an itinerary.", "error");
                     return;
                 }
 
                 $("#loadingMessage").fadeIn();
                 $("#itineraryResults").hide();
+                $("#flightResults").hide();
+                $("#flightSpinner").hide();
 
                 $.ajax({
                     type: "POST",
@@ -368,13 +421,15 @@
                     },
                     error: function(xhr) {
                         if (xhr.status === 401) {
-                            alert("Unauthorized: Please log in again.");
+                            showMessage("Unauthorized: Please log in again.", "error");
                             localStorage.removeItem("access_token");
                             window.location.reload();
                         } else {
-                            alert("An error occurred while generating your itinerary.");
+                            showMessage("An error occurred while generating your itinerary.", "error");
                         }
                         $("#loadingMessage").fadeOut();
+                        $("#itineraryForm").show(); // 👈 Show form again on error
+                        showMessage("An error occurred while generating your itinerary.", "error");
                     }
                 });
             });
@@ -382,7 +437,7 @@
             $("#logoutBtn").click(function() {
                 const token = localStorage.getItem("access_token");
                 if (!token) {
-                    alert("No active session found.");
+                    showMessage("No active session found.", "error");
                     return;
                 }
 
@@ -391,11 +446,11 @@
                     type: "POST",
                     headers: { "Authorization": `Bearer ${token}` },
                     success: function(response) {
-                        alert(response.message);
+                        showMessage(response.message, "success");
                         window.location.reload();
                     },
                     error: function() {
-                        alert("Error logging out.");
+                        showMessage("Error logging out.", "error");
                     }
                 });
             });
@@ -433,12 +488,39 @@
 
         function resetForm() {
             $("#itineraryForm")[0].reset();
+            $("#itineraryForm").show(); // 👈 Show form again
             $("#itineraryResults").hide();
+            $("#flightResults").hide();
+            $("#flightSpinner").hide();
             const backgroundUrl = $("body").data("background-url");
             $("body").css("background: cover", `url(${backgroundUrl}) no-repeat center center fixed`);
             document.getElementById("localTimeResult").innerText = '';
         }
 
+        function showMessage(message, type = "info", autoHide = true, duration = 3000) {
+            const messageBox = document.getElementById("messageBox");
+            messageBox.innerText = message;
+            
+            // Set colors based on message type
+            if (type === "success") {
+                messageBox.style.color = "lightgreen";
+            } else if (type === "error") {
+                messageBox.style.color = "red";
+            } else {
+                messageBox.style.color = "yellow";
+            }
+        
+            messageBox.style.display = "block";
+        
+            // Auto-hide logic for success messages (or when autoHide is true)
+            if (autoHide) {
+                setTimeout(() => {
+                    messageBox.style.display = "none";
+                    messageBox.innerText = ""; // Clear message text
+                }, duration);
+            }
+        }
+       
         function downloadItinerary() {
             const itineraryText = document.getElementById("itineraryText").innerText;
             const { jsPDF } = window.jspdf;
@@ -466,6 +548,7 @@
         
             // Save the generated PDF
             doc.save("my_itinerary.pdf");
+            showMessage("Itinerary downloaded successfully!", "success");
         }
 
         function copyItinerary() {
@@ -485,46 +568,67 @@
             document.body.removeChild(tempInput);
             
             // Provide feedback to the user
-            alert("Itinerary copied to clipboard!");
+            showMessage("Itinerary copied to clipboard!", "success");
         }
 
         async function searchFlights() {
+            const origin = $("#origin").val().trim();
             const destination = $("#destination").val().trim();
             const startDate = $("#startDate").val();
             const endDate = $("#endDate").val();
-        
-            if (!destination || !startDate || !endDate) {
-                alert("Destination and dates are required to search for flights.");
+
+            if (!origin || !destination || !startDate || !endDate) {
+                showMessage("All fields must be filled to search flights.", "error");
                 return;
-            }
-        
-            const origin = prompt("Enter your departure airport code (e.g., JFK):");
-            if (!origin) {
-                alert("Origin is required to search for flights.");
-                return;
-            }
-        
+            }    
+            
+            $("#flightSpinner").show();
+            $("#flightResults").hide();
+
             try {
                 const res = await fetch(`/search-flights?origin=${origin}&destination=${destination}&date_from=${startDate}&date_to=${endDate}`);
                 const data = await res.json();
+
+                $("#flightSpinner").hide();
         
                 if (!data.flights || data.flights.length === 0) {
-                    alert("No flights found.");
+                    showMessage("No flights found.", "info");
                     return;
                 }
         
-                let flightsHtml = "Available Flights:\n\n";
+                // Create the HTML for available flights
+                let flightsHtml = `
+                    <h5 style="margin-top: 20px;">Available Flights:</h5>
+                    <div class="flight-list">
+                `;
+
                 data.flights.forEach(flight => {
-                    flightsHtml += `📍 Destination: ${flight.destination}\n🛫 Departure: ${flight.departureDate}\n💵 Price: $${flight.price}\n\n`;
+                    flightsHtml += `
+                        <div class="flight-card" style="border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 6px; background-color: #f9f9f9;">
+                            <p><strong>🌍 Route:</strong> ${flight.origin} ➡️ ${flight.destination}</p>
+                            <p><strong>✈ Airline:</strong> ${flight.airline}</p>
+                            <p><strong>🛫 Departure:</strong> ${flight.departure}</p>
+                            <p><strong>🛬 Arrival:</strong> ${flight.arrival}</p>
+                            <p><strong>💵 Price:</strong> $${flight.price}</p>
+                            <button class="btn btn-primary book-flight-btn" onclick="bookFlight('${flight.bookingLink}')" style="margin-top: 10px;">Book Now</button>
+                        </div>
+                    `;
                 });
-        
-                alert(flightsHtml);
+
+                flightsHtml += `</div>`;
+
+                $("#flightResults").html(flightsHtml).fadeIn();
+                showMessage("Flights found!", "success");
             } catch (error) {
                 console.error("Error searching flights:", error);
-                alert("Failed to fetch flights. Please try again.");
+                $("#flightSpinner").hide();
+                showMessage("Failed to fetch flights. Please try again.", "error");
             }
-        }           
+        }   
         
+        function bookFlight(link) {
+            showMessage("🚧 Booking functionality is still in progress. Stay tuned!", "info");
+        }
     </script>
 </body>
 </html>
