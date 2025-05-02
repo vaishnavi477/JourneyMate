@@ -142,6 +142,20 @@ def get_lat_long(city_name):
     else:
         print(f"Error: {response['status']}")
         return None, None
+    
+def get_iata_code(city_name: str, access_token: str) -> str:
+    response = requests.get(
+        "https://test.api.amadeus.com/v1/reference-data/locations",
+        headers={"Authorization": f"Bearer {access_token}"},
+        params={
+            "subType": "AIRPORT,CITY",
+            "keyword": city_name,
+            "page[limit]": 1
+        }
+    )
+    if response.status_code != 200 or not response.json().get("data"):
+        raise HTTPException(status_code=400, detail=f"Could not resolve city '{city_name}' to IATA code.")
+    return response.json()["data"][0]["iataCode"]
 
 # ======================== Routes ======================== #
 
@@ -269,7 +283,7 @@ async def generate_itinerary(
         max_tokens=1000,
         temperature=0.5
     )
-
+    
     generated_itinerary = response.choices[0].message.content
 
     itinerary = Itinerary(
@@ -322,7 +336,7 @@ def search_flights(origin: str, destination: str, date_from: str, date_to: str):
     if not AMADEUS_API_KEY or not AMADEUS_API_SECRET:
         raise HTTPException(status_code=500, detail="Amadeus credentials missing.")
 
-    # Step 1: Get access token
+    # Step 1: Authenticate
     auth_response = requests.post(
         "https://test.api.amadeus.com/v1/security/oauth2/token",
         data={
@@ -334,22 +348,27 @@ def search_flights(origin: str, destination: str, date_from: str, date_to: str):
     )
 
     if auth_response.status_code != 200:
-        print(auth_response.text)
         raise HTTPException(status_code=500, detail="Failed to authenticate with Amadeus.")
 
     access_token = auth_response.json()["access_token"]
 
-    # Step 2: Search flights
-    url = "https://test.api.amadeus.com/v1/shopping/flight-destinations"
+    # Step 2: Get IATA codes for origin and destination
+    origin_iata = get_iata_code(origin, access_token)
+    destination_iata = get_iata_code(destination, access_token)
+
+    # Step 3: Search flights
+    url = "https://test.api.amadeus.com/v2/shopping/flight-offers"
     headers = {
         "Authorization": f"Bearer {access_token}"
     }
     params = {
-        "origin": origin.upper(),
+        "originLocationCode": origin_iata,
+        "destinationLocationCode": destination_iata,
         "departureDate": date_from,
-        "oneWay": False,
-        "maxPrice": 1000,
-        "currency": "USD"
+        "returnDate": date_to,
+        "adults": 1,
+        "currencyCode": "USD",
+        "max": 5
     }
 
     response = requests.get(url, headers=headers, params=params)
@@ -361,14 +380,15 @@ def search_flights(origin: str, destination: str, date_from: str, date_to: str):
     flight_data = response.json()
     results = []
 
-    for flight in flight_data.get("data", []):
+    for offer in flight_data.get("data", []):
         results.append({
-            "price": flight.get("price", {}).get("total", "N/A"),
-            "destination": flight.get("destination"),
-            "departureDate": flight.get("departureDate"),
+            "price": offer.get("price", {}).get("total", "N/A"),
+            "airline": offer.get("validatingAirlineCodes", ["N/A"])[0],
+            "departure": offer.get("itineraries", [{}])[0].get("segments", [{}])[0].get("departure", {}).get("at", "N/A"),
+            "arrival": offer.get("itineraries", [{}])[0].get("segments", [{}])[0].get("arrival", {}).get("at", "N/A"),
         })
 
-    return {"flights": results}
+    return {"flights": results or [], "message": "No flights found." if not results else ""}
 
 # ======================== User Management Routes ======================== #
 
