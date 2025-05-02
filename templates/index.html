@@ -599,19 +599,28 @@
         
                 // Create the HTML for available flights
                 let flightsHtml = `
-                    <h5 style="margin-top: 20px;">Available Flights:</h5>
-                    <div class="flight-list">
+                    <h5 style="margin-top: 2px;"><b>Available Flights:</b></h5>
+                    <div class="flight-list" style="display: flex; flex-wrap: wrap; gap: 10px;">
                 `;
 
                 data.flights.forEach(flight => {
                     flightsHtml += `
-                        <div class="flight-card" style="border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 6px; background-color: #f9f9f9;">
-                            <p><strong>🌍 Route:</strong> ${flight.origin} ➡️ ${flight.destination}</p>
-                            <p><strong>✈ Airline:</strong> ${flight.airline}</p>
-                            <p><strong>🛫 Departure:</strong> ${flight.departure}</p>
-                            <p><strong>🛬 Arrival:</strong> ${flight.arrival}</p>
-                            <p><strong>💵 Price:</strong> $${flight.price}</p>
-                            <button class="btn btn-primary book-flight-btn" onclick="bookFlight('${flight.bookingLink}')" style="margin-top: 10px;">Book Now</button>
+                        <div class="flight-card" style="
+                            flex: 1 1 48%;
+                            border: 1px solid #ccc;
+                            padding: 5px;
+                            margin-bottom: 15px;
+                            border-radius: 3px;
+                            background-color: #f9f9f9;
+                            box-sizing: border-box;
+                            font-size: 14px;
+                            line-height: 1.4;
+                        ">
+                            <div style="margin-bottom: 6px;"><strong>✈ Airline:</strong> ${flight.airline}</div>
+                            <div style="margin-bottom: 6px;"><strong>🛫 Departure:</strong> ${flight.departure}</div>
+                            <div style="margin-bottom: 6px;"><strong>🛬 Arrival:</strong> ${flight.arrival}</div>
+                            <div style="margin-bottom: 10px;"><strong>💵 Price:</strong> $${flight.price}</div>
+                            <button class="btn btn-primary book-flight-btn" onclick="bookFlight()" style="margin-top: 10px;">Book Now</button>
                         </div>
                     `;
                 });
@@ -620,6 +629,7 @@
 
                 $("#flightResults").html(flightsHtml).fadeIn();
                 showMessage("Flights found!", "success");
+                console.log(`Route: ${origin} ➡️ ${destination}`);
             } catch (error) {
                 console.error("Error searching flights:", error);
                 $("#flightSpinner").hide();
@@ -627,8 +637,8 @@
             }
         }   
         
-        function bookFlight(link) {
-            showMessage("🚧 Booking functionality is still in progress. Stay tuned!", "info");
+        function bookFlight() {
+            window.open(link, "_blank");
         }
     </script>
 </body>
