@@ -14,3 +14,4 @@ pydantic[email]
 pyjwt
 pytz
 requests
+httpx
