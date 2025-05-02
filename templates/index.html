@@ -220,7 +220,7 @@
                 <div class="mb-3">
                     <label for="signupPassword" class="form-label">Password</label>
                     <input type="password" class="form-control" id="signupPassword" placeholder="Enter your password" required 
-                    pattern="(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}" title="Password must be at least 8 characters long and include one uppercase letter, one number, and one special character.">
+                    pattern="(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}" title="Password must be at least 8 characters long and include one uppercase letter, one number, and one special character.">
                 </div>
                 <button type="submit" class="btn-custom">Sign Up</button>
             </form>
@@ -235,7 +235,8 @@
                 </div>
                 <div class="mb-3">
                     <label for="loginPassword" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="loginPassword" placeholder="Enter your password" required>
+                    <input type="password" class="form-control" id="loginPassword" placeholder="Enter your password" required
+                    pattern="(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}" title="Password must be at least 8 characters long and include one uppercase letter, one number, and one special character.">
                 </div>
                 <button type="submit" class="btn-custom">Login</button>
             </form>
