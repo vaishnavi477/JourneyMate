@@ -151,10 +151,12 @@
         .flight-card {
             background-color: #f9f9f9;
             border-left: 4px solid #007bff;
-            padding: 12px 15px;
+            padding: 10px 12px;
             margin-bottom: 10px;
-            border-radius: 6px;
+            border-radius: 3px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            font-size: 14px;
+            line-height: 1.4;
         }   
         
         .flight-card p {
@@ -235,8 +237,7 @@
                 </div>
                 <div class="mb-3">
                     <label for="loginPassword" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="loginPassword" placeholder="Enter your password" required
-                    pattern="(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}" title="Password must be at least 8 characters long and include one uppercase letter, one number, and one special character.">
+                    <input type="password" class="form-control" id="loginPassword" placeholder="Enter your password" required>
                 </div>
                 <button type="submit" class="btn-custom">Login</button>
             </form>
