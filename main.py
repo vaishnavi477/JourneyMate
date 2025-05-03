@@ -368,7 +368,7 @@ def search_flights(origin: str, destination: str, date_from: str, date_to: str):
         "returnDate": date_to,
         "adults": 1,
         "currencyCode": "USD",
-        "max": 5
+        "max": "7"
     }
 
     response = requests.get(url, headers=headers, params=params)
@@ -379,16 +379,28 @@ def search_flights(origin: str, destination: str, date_from: str, date_to: str):
 
     flight_data = response.json()
     results = []
+    # seen_flights = set()
 
     for offer in flight_data.get("data", []):
-        results.append({
-            "price": offer.get("price", {}).get("total", "N/A"),
-            "airline": offer.get("validatingAirlineCodes", ["N/A"])[0],
-            "departure": offer.get("itineraries", [{}])[0].get("segments", [{}])[0].get("departure", {}).get("at", "N/A"),
-            "arrival": offer.get("itineraries", [{}])[0].get("segments", [{}])[0].get("arrival", {}).get("at", "N/A"),
-        })
+        price = offer.get("price", {}).get("total", "N/A")
+        airline = offer.get("validatingAirlineCodes", ["N/A"])[0]
 
-    return {"flights": results or [], "message": "No flights found." if not results else ""}
+        for itinerary in offer.get("itineraries", []):
+            for segment in itinerary.get("segments", []):
+                departure = segment.get("departure", {}).get("at", "N/A")
+                arrival = segment.get("arrival", {}).get("at", "N/A")
+                departure_airport = segment.get("departure", {}).get("iataCode", "N/A")
+                arrival_airport = segment.get("arrival", {}).get("iataCode", "N/A")
+                
+                results.append({
+                    "airline": airline,
+                    "departure": f"{departure_airport} {departure}",
+                    "arrival": f"{arrival_airport} {arrival}",
+                    "price": price,
+                    "bookingLink": f"https://www.example.com/book?from={departure_airport}&to={arrival_airport}&date={departure}",  # Replace with actual booking if available
+                })
+
+    return {"flights": results, "message": "No flights found." if not results else ""}
 
 # ======================== User Management Routes ======================== #
 
