@@ -381,7 +381,6 @@
 
             $("#itineraryForm").submit(function(event) {
                 event.preventDefault();
-
                 const destination = $("#destination").val().trim();
                 const startDate = $("#startDate").val();
                 const endDate = $("#endDate").val();
@@ -393,12 +392,10 @@
                     showMessage("You must be logged in to generate an itinerary.", "error");
                     return;
                 }
-
                 $("#loadingMessage").fadeIn();
                 $("#itineraryResults").hide();
                 $("#flightResults").hide();
                 $("#flightSpinner").hide();
-
                 $.ajax({
                     type: "POST",
                     url: "/generate-itinerary",
@@ -582,11 +579,9 @@
             if (!origin || !destination || !startDate || !endDate) {
                 showMessage("All fields must be filled to search flights.", "error");
                 return;
-            }    
-            
+            }  
             $("#flightSpinner").show();
             $("#flightResults").hide();
-
             try {
                 const res = await fetch(`/search-flights?origin=${origin}&destination=${destination}&date_from=${startDate}&date_to=${endDate}`);
                 const data = await res.json();
@@ -597,13 +592,11 @@
                     showMessage("No flights found.", "info");
                     return;
                 }
-        
                 // Create the HTML for available flights
                 let flightsHtml = `
                     <h5 style="margin-top: 2px;"><b>Available Flights:</b></h5>
                     <div class="flight-list" style="display: flex; flex-wrap: wrap; gap: 10px;">
                 `;
-
                 data.flights.forEach(flight => {
                     flightsHtml += `
                         <div class="flight-card" style="
@@ -621,7 +614,7 @@
                             <div style="margin-bottom: 6px;"><strong>🛫 Departure:</strong> ${flight.departure}</div>
                             <div style="margin-bottom: 6px;"><strong>🛬 Arrival:</strong> ${flight.arrival}</div>
                             <div style="margin-bottom: 10px;"><strong>💵 Price:</strong> $${flight.price}</div>
-                            <button class="btn btn-primary book-flight-btn" onclick="bookFlight()" style="margin-top: 10px;">Book Now</button>
+                            <button class="btn btn-primary book-flight-btn" onclick="bookFlight('${flight.bookingLink}')" style="margin-top: 10px;">Book Now</button>
                         </div>
                     `;
                 });
@@ -638,7 +631,7 @@
             }
         }   
         
-        function bookFlight() {
+        function bookFlight(link) {
             window.open(link, "_blank");
         }
     </script>
