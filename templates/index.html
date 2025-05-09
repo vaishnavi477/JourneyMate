@@ -167,7 +167,7 @@
             background-color: #007bff; /* Bootstrap Blue */
             color: white;              /* White text for contrast */
             border: none;
-            padding: 10px 18px;
+            padding: 15px 15px;
             border-radius: 5px;
             cursor: pointer;
             font-weight: 500;
@@ -592,6 +592,9 @@
                     showMessage("No flights found.", "info");
                     return;
                 }
+
+                showMessage("Flights found!", "success");
+
                 // Create the HTML for available flights
                 let flightsHtml = `
                     <h5 style="margin-top: 2px;"><b>Available Flights:</b></h5>
@@ -602,19 +605,24 @@
                         <div class="flight-card" style="
                             flex: 1 1 48%;
                             border: 1px solid #ccc;
-                            padding: 5px;
+                            padding: 15px;
                             margin-bottom: 15px;
-                            border-radius: 3px;
+                            border-radius: 5px;
                             background-color: #f9f9f9;
                             box-sizing: border-box;
                             font-size: 14px;
                             line-height: 1.4;
+                            display: flex;
+                            flex-direction: column;
+                            justify-content: space-between;
+                            min-height: 250px; /* Ensure consistent height */
                         ">
-                            <div style="margin-bottom: 6px;"><strong>✈ Airline:</strong> ${flight.airline}</div>
-                            <div style="margin-bottom: 6px;"><strong>🛫 Departure:</strong> ${flight.departure}</div>
-                            <div style="margin-bottom: 6px;"><strong>🛬 Arrival:</strong> ${flight.arrival}</div>
-                            <div style="margin-bottom: 10px;"><strong>💵 Price:</strong> $${flight.price}</div>
-                            <button class="btn btn-primary book-flight-btn" onclick="bookFlight('${flight.bookingLink}')" style="margin-top: 10px;">Book Now</button>
+                            <div style="margin-bottom: 8px;"><strong>🗺 Route:</strong> ${flight.route}</div>
+                            <div style="margin-bottom: 8px;"><strong>✈ Airline:</strong> ${flight.airline}</div>
+                            <div style="margin-bottom: 8px;"><strong>🛫 Departure:</strong> ${flight.departure}</div>
+                            <div style="margin-bottom: 8px;"><strong>🛬 Arrival:</strong> ${flight.arrival}</div>
+                            <div style="margin-bottom: 12px;"><strong>💵 Price:</strong> $${flight.price}</div>
+                            <button class="btn btn-primary book-flight-btn" onclick="bookFlight('${flight.bookingLink}') style="margin-top: auto">Book Now</button>
                         </div>
                     `;
                 });
@@ -622,8 +630,6 @@
                 flightsHtml += `</div>`;
 
                 $("#flightResults").html(flightsHtml).fadeIn();
-                showMessage("Flights found!", "success");
-                console.log(`Route: ${origin} ➡️ ${destination}`);
             } catch (error) {
                 console.error("Error searching flights:", error);
                 $("#flightSpinner").hide();
