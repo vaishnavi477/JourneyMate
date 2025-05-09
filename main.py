@@ -157,6 +157,23 @@ def get_iata_code(city_name: str, access_token: str) -> str:
         raise HTTPException(status_code=400, detail=f"Could not resolve city '{city_name}' to IATA code.")
     return response.json()["data"][0]["iataCode"]
 
+def get_city_name_from_iata(iata_code: str, access_token: str) -> str:
+    response = requests.get(
+        "https://test.api.amadeus.com/v1/reference-data/locations",
+        headers={"Authorization": f"Bearer {access_token}"},
+        params={
+            "subType": "AIRPORT,CITY",
+            "keyword": iata_code,
+            "page[limit]": 1
+        }
+    )
+    if response.status_code != 200 or not response.json().get("data"):
+        return iata_code  # fallback if not found
+    data = response.json()["data"][0]
+    city = data.get("address", {}).get("cityName", "")
+    name = data.get("name", "")
+    return f"{city} ({iata_code})" if city else f"{name} ({iata_code})"
+
 # ======================== Routes ======================== #
 
 @app.get("/", response_class=HTMLResponse)
@@ -378,29 +395,52 @@ def search_flights(origin: str, destination: str, date_from: str, date_to: str):
         raise HTTPException(status_code=500, detail="Error fetching flight data.")
 
     flight_data = response.json()
+
     results = []
-    # seen_flights = set()
 
     for offer in flight_data.get("data", []):
         price = offer.get("price", {}).get("total", "N/A")
         airline = offer.get("validatingAirlineCodes", ["N/A"])[0]
 
         for itinerary in offer.get("itineraries", []):
-            for segment in itinerary.get("segments", []):
-                departure = segment.get("departure", {}).get("at", "N/A")
-                arrival = segment.get("arrival", {}).get("at", "N/A")
-                departure_airport = segment.get("departure", {}).get("iataCode", "N/A")
-                arrival_airport = segment.get("arrival", {}).get("iataCode", "N/A")
-                
-                results.append({
-                    "airline": airline,
-                    "departure": f"{departure_airport} {departure}",
-                    "arrival": f"{arrival_airport} {arrival}",
-                    "price": price,
-                    "bookingLink": f"https://www.example.com/book?from={departure_airport}&to={arrival_airport}&date={departure}",  # Replace with actual booking if available
-                })
+            segments = itinerary.get("segments", [])
+            if not segments:
+                continue
+            
+            # First and last segment for start and end of journey
+            first_segment = segments[0]
+            last_segment = segments[-1]
 
-    return {"flights": results, "message": "No flights found." if not results else ""}
+            departure = first_segment.get("departure", {}).get("at", "N/A")
+            arrival = last_segment.get("arrival", {}).get("at", "N/A")
+            departure_airport = first_segment.get("departure", {}).get("iataCode", "N/A")
+            arrival_airport = last_segment.get("arrival", {}).get("iataCode", "N/A")
+
+            departure_city_name = get_city_name_from_iata(departure_airport, access_token)
+            arrival_city_name = get_city_name_from_iata(arrival_airport, access_token)
+            
+            results.append({
+                "route": f"{departure_city_name} → {arrival_city_name}",
+                "airline": airline,
+                "departure": f"{departure_airport} {departure}",
+                "arrival": f"{arrival_airport} {arrival}",
+                "price": price,
+                "bookingLink": f"https://www.example.com/book?from={departure_airport}&to={arrival_airport}&date={departure}",
+            })
+    return {"flights": results, "message": "No flights found." if not results else "Flights retrieved successfully!"}
+    
+# ========== User Logout  ========== #
+@app.post("/logout")
+def logout_user(token: str = Depends(oauth2_scheme)):
+    """Logout the current user by blacklisting their JWT token."""
+    try:
+        # Decode and validate token first
+        verify_access_token(token)
+        # Add to blacklist so it can't be reused
+        blacklisted_tokens.add(token)
+        return {"message": "User logged out successfully"}
+    except HTTPException as e:
+        raise HTTPException(status_code=e.status_code, detail="Logout failed: " + e.detail)
 
 # ======================== User Management Routes ======================== #
 
