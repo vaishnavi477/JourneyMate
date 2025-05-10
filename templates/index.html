@@ -483,7 +483,7 @@
                     }
                 }, doneTypingInterval);
             });
-        });
+        });  
 
         function resetForm() {
             $("#itineraryForm")[0].reset();
@@ -622,7 +622,7 @@
                             <div style="margin-bottom: 8px;"><strong>🛫 Departure:</strong> ${flight.departure}</div>
                             <div style="margin-bottom: 8px;"><strong>🛬 Arrival:</strong> ${flight.arrival}</div>
                             <div style="margin-bottom: 12px;"><strong>💵 Price:</strong> $${flight.price}</div>
-                            <button class="btn btn-primary book-flight-btn" onclick="bookFlight('${flight.bookingLink}') style="margin-top: auto">Book Now</button>
+                            <button class="btn btn-primary book-flight-btn" onclick="bookFlight('${flight.bookingLink}')" style="margin-top: auto">Book Now</button>
                         </div>
                     `;
                 });
